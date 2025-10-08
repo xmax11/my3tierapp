@@ -8,7 +8,7 @@ form.addEventListener("submit", async (e) => {
   const email = document.getElementById("email").value;
 
   // ✅ Updated backend API URL to EC2 public IP
-  const res = await fetch("http://18.207.118.74:3000/users", {
+  const res = await fetch("http://13.220.89.87:3000/users", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email }),
