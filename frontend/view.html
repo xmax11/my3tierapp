@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Management | View Users</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>User Management App</h1>
+    <nav>
+      <a href="index.html">Add User</a>
+      <a href="view.html">View Users</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Saved Users</h2>
+      <table id="usersTable">
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Email</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    fetch("http://localhost:3000/users")
+      .then(res => res.json())
+      .then(users => {
+        const tbody = document.querySelector("#usersTable tbody");
+        tbody.innerHTML = users.map(u => `
+          <tr>
+            <td>${u.id}</td>
+            <td>${u.name}</td>
+            <td>${u.email}</td>
+          </tr>
+        `).join("");
+      });
+  </script>
+</body>
+</html>
