@@ -40,16 +40,8 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/3-tier-app-backend:latest
 
-      # Step 5: Optional - push MySQL if you customized it
-      # - name: Build & Push Database
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     context: ./database
-      #     push: true
-      #     tags: ${{ secrets.DOCKERHUB_USERNAME }}/3-tier-app-db:latest
-
-      # Step 6: Deploy to EC2
-      - name: Deploy new containers to EC2
+      # Step 5: Deploy to EC2 via Docker Compose
+      - name: Deploy to EC2
         env:
           HOST: ${{ secrets.EC2_HOST }}
           USER: ${{ secrets.EC2_USER }}
@@ -59,16 +51,16 @@ jobs:
           echo "$PRIVATE_KEY" > key.pem
           chmod 600 key.pem
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST << 'EOF'
+            cd /home/ubuntu/3-tier-app
+
+            echo "Logging in to Docker Hub..."
+            echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+
             echo "Pulling latest images..."
-            docker pull $DOCKERHUB_USERNAME/3-tier-app-frontend:latest
-            docker pull $DOCKERHUB_USERNAME/3-tier-app-backend:latest
-            
+            docker compose pull
+
             echo "Recreating containers..."
-            docker stop frontend_app backend_app || true
-            docker rm frontend_app backend_app || true
-            
-            docker run -d --name backend_app -p 3000:3000 $DOCKERHUB_USERNAME/3-tier-app-backend:latest
-            docker run -d --name frontend_app -p 80:80 $DOCKERHUB_USERNAME/3-tier-app-frontend:latest
+            docker compose up -d --remove-orphans
 
             echo "Deployment complete."
           EOF
