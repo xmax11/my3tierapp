@@ -10,21 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 1: Set up Docker
+      # Step 2: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 2: Log in to Docker Hub
+      # Step 3: Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Step 3: Build and push frontend image
+      # Step 4: Build & push frontend image
       - name: Build & Push Frontend
         uses: docker/build-push-action@v6
         with:
@@ -32,7 +33,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/3-tier-app-frontend:latest
 
-      # Step 4: Build and push backend image
+      # Step 5: Build & push backend image
       - name: Build & Push Backend
         uses: docker/build-push-action@v6
         with:
@@ -40,7 +41,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/3-tier-app-backend:latest
 
-      # Step 5: Deploy to EC2 via Docker Compose
+      # Step 6: Deploy to EC2 using Docker Compose
       - name: Deploy to EC2
         env:
           HOST: ${{ secrets.EC2_HOST }}
@@ -53,14 +54,13 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem $USER@$HOST << 'EOF'
             cd /home/ubuntu/3-tier-app
 
-            echo "Logging in to Docker Hub..."
-            echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-
             echo "Pulling latest images..."
-            docker compose pull
+            docker pull $DOCKERHUB_USERNAME/3-tier-app-frontend:latest
+            docker pull $DOCKERHUB_USERNAME/3-tier-app-backend:latest
 
-            echo "Recreating containers..."
-            docker compose up -d --remove-orphans
+            echo "Recreating containers with Docker Compose..."
+            docker compose down || true
+            docker compose up -d --build
 
             echo "Deployment complete."
           EOF
