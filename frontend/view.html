@@ -11,35 +11,62 @@
     <h1>User Management App</h1>
     <nav>
       <a href="index.html">Add User</a>
-      <a href="view.html">View Users</a>
+      <a href="view.html" class="active">View Users</a>
     </nav>
   </header>
 
-  <div class="container">
+  <main class="container">
     <div class="card">
       <h2>Saved Users</h2>
       <table id="usersTable">
         <thead>
-          <tr><th>ID</th><th>Name</th><th>Email</th></tr>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+          </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <tr><td colspan="3" class="loading">Loading users...</td></tr>
+        </tbody>
       </table>
     </div>
-  </div>
+  </main>
 
-  <script>
-    fetch("http://localhost:3000/users")
-      .then(res => res.json())
-      .then(users => {
+gi  <script>
+    const API_URL = "http://18.207.118.74:3000/users"; // ✅ Use your EC2 backend
+
+    async function loadUsers() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error("Failed to fetch users");
+        const users = await res.json();
+
         const tbody = document.querySelector("#usersTable tbody");
-        tbody.innerHTML = users.map(u => `
-          <tr>
+        tbody.innerHTML = "";
+
+        if (users.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="3" class="no-data">No users found.</td></tr>`;
+          return;
+        }
+
+        users.forEach((u) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
             <td>${u.id}</td>
             <td>${u.name}</td>
             <td>${u.email}</td>
-          </tr>
-        `).join("");
-      });
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        const tbody = document.querySelector("#usersTable tbody");
+        tbody.innerHTML = `<tr><td colspan="3" class="error">Error loading users!</td></tr>`;
+        console.error(error);
+      }
+    }
+
+    loadUsers();
   </script>
 </body>
 </html>
